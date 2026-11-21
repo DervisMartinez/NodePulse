@@ -1,0 +1,10 @@
+{
+  "name": "monitoreo-collector",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Recolector de métricas de CPU, memoria y carga del SO (CAO503)",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  }
+}

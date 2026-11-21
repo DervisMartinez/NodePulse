@@ -1,0 +1,10 @@
+{
+  "name": "monitoreo-worker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Worker asíncrono con reintentos configurables (CAO503)",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  }
+}
