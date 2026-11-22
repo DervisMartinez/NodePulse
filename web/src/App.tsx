@@ -7,6 +7,7 @@ import {
   type SystemHealthData,
   type TaskRecord,
 } from './utils/api-client';
+import { formatRelative } from './utils/format';
 
 function statusBadgeClass(status: string): string {
   switch (status) {
@@ -234,7 +235,9 @@ export function App(): React.ReactElement {
                     </td>
                     <td className="mono">{node.loadAvg.toFixed(2)}</td>
                     <td className="mono">{node.uptimeSeconds}s</td>
-                    <td className="mono">{formatTime(node.lastSeenAt)}</td>
+                    <td className="mono" title={formatTime(node.lastSeenAt)}>
+                      {formatRelative(node.lastSeenAt)}
+                    </td>
                   </tr>
                 ))
               )}
