@@ -1,9 +1,11 @@
+require('dotenv').config();
 const { createPool } = require('./db');
 const { createApp } = require('./app');
 
-const port = Number(process.env.API_PORT) || 4000;
-const app = createApp();
+const port = Number(process.env.PORT) || 3000;
+const pool = createPool();
+const app = createApp(pool);
 
-app.start(port, () => {
-  console.log(`API escuchando en ${port}`);
-// TODO: completar cierre de servidor
+app.listen(port, () => {
+  console.log(`[api] FACYT Monitoreo API escuchando en puerto ${port}`);
+});

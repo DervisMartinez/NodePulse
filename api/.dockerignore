@@ -1,1 +1,3 @@
-# TODO: definir exclusiones de build
+node_modules
+.env
+npm-debug.log

@@ -1,14 +1,23 @@
 const express = require('express');
+const cors = require('cors');
 const { createHealthRouter } = require('./routes/health.routes');
-// TODO: importar rutas de nodes, tasks y middlewares
+const { createNodesRouter } = require('./routes/nodes.routes');
+const { createTasksRouter } = require('./routes/tasks.routes');
+const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 
 function createApp(db) {
   const app = express();
 
-  app.use('/api', createHealthRouter(db));
-  app.use('/api', nodesRouter);
+  app.use(cors());
+  app.use(express.json());
 
-  // TODO: registrar notFoundHandler y errorHandler
+  app.use('/api', createHealthRouter(db));
+  app.use('/api', createNodesRouter(db));
+  app.use('/api', createTasksRouter(db));
+
+  app.use(notFoundHandler);
+  app.use(errorHandler);
+
   return app;
 }
 

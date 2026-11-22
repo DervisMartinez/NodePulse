@@ -1,9 +1,17 @@
-// TODO: instalar pg y completar configuracion de conexion
+const { Pool } = require('pg');
+
 function createPool() {
-  const config = {
-    connectionString: process.env.DB_URL,
-  };
-  return null;
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error('DATABASE_URL no está definida');
+  }
+
+  return new Pool({
+    connectionString,
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 5000,
+  });
 }
 
-module.exports = {};
+module.exports = { createPool };
