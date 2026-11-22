@@ -21,14 +21,32 @@ function serializeTask(row) {
   };
 }
 
+const TASK_STATUSES = ['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'];
+
 function createTasksRouter(db) {
   const router = express.Router();
 
-  router.get('/tasks', async (_req, res, next) => {
+  router.get('/tasks', async (req, res, next) => {
     try {
-      const { rows } = await db.query(
-        'SELECT * FROM tasks ORDER BY id DESC LIMIT 50'
-      );
+      const { status } = req.query;
+
+      if (status !== undefined && !TASK_STATUSES.includes(status)) {
+        return next(
+          new AppError(
+            `El filtro "status" debe ser uno de: ${TASK_STATUSES.join(', ')}.`,
+            400,
+            'VALIDATION_ERROR'
+          )
+        );
+      }
+
+      const { rows } = status
+        ? await db.query(
+            'SELECT * FROM tasks WHERE status = $1 ORDER BY id DESC LIMIT 50',
+            [status]
+          )
+        : await db.query('SELECT * FROM tasks ORDER BY id DESC LIMIT 50');
+
       res.status(200).json({
         success: true,
         data: rows.map(serializeTask),
