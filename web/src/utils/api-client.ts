@@ -15,6 +15,7 @@ export interface NodeRecord {
   online: boolean;
   cpuPercent: number;
   memoryPercent: number;
+  memoryLimitMb?: number | null;
   loadAvg: number;
   uptimeSeconds: number;
   lastSeenAt: string;
