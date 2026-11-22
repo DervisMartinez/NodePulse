@@ -99,6 +99,43 @@ function createTasksRouter(db) {
     }
   });
 
+  router.post('/tasks/requeue-stale', async (_req, res, next) => {
+    try {
+      const staleMs = Number(process.env.TASK_STALE_MS) || 60000;
+
+      const { rows } = await db.query(
+        `UPDATE tasks
+         SET status = 'PENDING',
+             worker_name = NULL,
+             updated_at = NOW()
+         WHERE status = 'PROCESSING'
+           AND updated_at < NOW() - ($1::int * INTERVAL '1 millisecond')
+         RETURNING id`,
+        [staleMs]
+      );
+
+      const taskIds = rows.map((row) => row.id);
+
+      if (taskIds.length > 0) {
+        await db.query(
+          `INSERT INTO incident_audit (service_name, severity, event_type, message, metadata)
+           VALUES ('api', 'WARN', 'TASKS_REQUEUED', $1, $2)`,
+          [
+            `Se reencolaron ${taskIds.length} tarea(s) atascada(s) en PROCESSING por más de ${staleMs} ms.`,
+            JSON.stringify({ taskIds, staleMs }),
+          ]
+        );
+      }
+
+      res.status(200).json({
+        success: true,
+        data: { requeued: taskIds.length, taskIds, staleMs },
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
   router.patch('/tasks/:id', validateTaskUpdatePayload, async (req, res, next) => {
     try {
       const taskId = Number(req.params.id);
