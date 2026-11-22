@@ -202,6 +202,7 @@ export function App(): React.ReactElement {
                 <th>Estado</th>
                 <th>CPU %</th>
                 <th>RAM %</th>
+                <th>Límite</th>
                 <th>Load (1m)</th>
                 <th>Uptime (s)</th>
                 <th>Último reporte</th>
@@ -210,7 +211,7 @@ export function App(): React.ReactElement {
             <tbody>
               {nodes.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="muted">
+                  <td colSpan={9} className="muted">
                     Esperando telemetría del servicio collector...
                   </td>
                 </tr>
@@ -228,6 +229,9 @@ export function App(): React.ReactElement {
                     </td>
                     <td className="mono">{node.cpuPercent.toFixed(2)}%</td>
                     <td className="mono">{node.memoryPercent.toFixed(2)}%</td>
+                    <td className="mono">
+                      {node.memoryLimitMb != null ? `${node.memoryLimitMb} MB` : 'sin límite'}
+                    </td>
                     <td className="mono">{node.loadAvg.toFixed(2)}</td>
                     <td className="mono">{node.uptimeSeconds}s</td>
                     <td className="mono">{formatTime(node.lastSeenAt)}</td>
