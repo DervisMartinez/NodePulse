@@ -1,17 +1,11 @@
-FROM node:20-alpine AS deps
+FROM node:20-alpine AS builder
 WORKDIR /app
-COPY package*.json ./
+COPY package.json ./
 RUN npm install --omit=dev
+COPY src ./src
 
-FROM node:20-alpine AS production
+FROM node:20-alpine
 WORKDIR /app
-ENV NODE_ENV=production
-COPY --from=deps /app/node_modules ./node_modules
-COPY package*.json ./
-COPY db.js app.js server.js ./
-COPY routes ./routes
-COPY middleware ./middleware
-COPY tests ./tests
-
-EXPOSE 3000
-CMD ["npm", "start"]
+COPY --from=builder /app/dist ./dist
+EXPOSE 8000
+CMD ["node", "dist/server.js"]
