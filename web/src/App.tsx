@@ -4,6 +4,7 @@ import {
   type AuditRecord,
   type NodeDetailData,
   type NodeRecord,
+  type RequeueStaleData,
   type SystemHealthData,
   type TaskRecord,
 } from './utils/api-client';
@@ -56,6 +57,8 @@ export function App(): React.ReactElement {
   const [lastUpdated, setLastUpdated] = useState<string>('—');
   const [statusFilter, setStatusFilter] = useState<TaskStatus | ''>('');
   const [filteredTasks, setFilteredTasks] = useState<TaskRecord[] | null>(null);
+  const [requeuing, setRequeuing] = useState(false);
+  const [requeueMessage, setRequeueMessage] = useState<string | null>(null);
 
   const loadDashboard = useCallback(async () => {
     try {
@@ -126,6 +129,25 @@ export function App(): React.ReactElement {
       setError(err instanceof Error ? err.message : 'No se pudo encolar la tarea.');
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleRequeueStale(): Promise<void> {
+    setRequeuing(true);
+    try {
+      const { requeued } = await apiRequest<RequeueStaleData>('/tasks/requeue-stale', {
+        method: 'POST',
+      });
+      setRequeueMessage(
+        requeued === 0
+          ? 'No había tareas atascadas.'
+          : `Se reencolaron ${requeued} tarea(s) atascada(s).`
+      );
+      await loadDashboard();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudieron reencolar las tareas.');
+    } finally {
+      setRequeuing(false);
     }
   }
 
@@ -301,24 +323,35 @@ export function App(): React.ReactElement {
       <section className="card">
         <div className="section-header">
           <h2 className="section-title">Cola de tareas en segundo plano</h2>
-          <label className="checkbox-label">
-            Estado:
-            <select
-              className="input"
-              value={statusFilter}
-              onChange={(e) => {
-                setFilteredTasks(null);
-                setStatusFilter(e.target.value as TaskStatus | '');
-              }}
+          <div className="topbar-actions">
+            {requeueMessage && <span className="muted">{requeueMessage}</span>}
+            <button
+              type="button"
+              className="btn"
+              onClick={() => void handleRequeueStale()}
+              disabled={requeuing}
             >
-              <option value="">Todas</option>
-              {TASK_STATUSES.map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
-              ))}
-            </select>
-          </label>
+              {requeuing ? 'Reencolando...' : 'Reencolar tareas atascadas'}
+            </button>
+            <label className="checkbox-label">
+              Estado:
+              <select
+                className="input"
+                value={statusFilter}
+                onChange={(e) => {
+                  setFilteredTasks(null);
+                  setStatusFilter(e.target.value as TaskStatus | '');
+                }}
+              >
+                <option value="">Todas</option>
+                {TASK_STATUSES.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
         <form className="form-row" onSubmit={(e) => void handleCreateTask(e)}>
           <input

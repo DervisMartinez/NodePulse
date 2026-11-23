@@ -60,6 +60,12 @@ export interface AuditRecord {
   createdAt: string;
 }
 
+export interface RequeueStaleData {
+  requeued: number;
+  taskIds: number[];
+  staleMs: number;
+}
+
 interface ApiEnvelope<T> {
   success: boolean;
   data?: T;
