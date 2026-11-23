@@ -9,6 +9,10 @@ import {
 } from './utils/api-client';
 import { formatRelative } from './utils/format';
 
+type TaskStatus = TaskRecord['status'];
+
+const TASK_STATUSES: TaskStatus[] = ['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'];
+
 function statusBadgeClass(status: string): string {
   switch (status) {
     case 'healthy':
@@ -50,26 +54,32 @@ export function App(): React.ReactElement {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string>('—');
+  const [statusFilter, setStatusFilter] = useState<TaskStatus | ''>('');
+  const [filteredTasks, setFilteredTasks] = useState<TaskRecord[] | null>(null);
 
   const loadDashboard = useCallback(async () => {
     try {
-      const [healthData, nodesData, tasksData, auditData] = await Promise.all([
+      const [healthData, nodesData, tasksData, auditData, filteredData] = await Promise.all([
         apiRequest<SystemHealthData>('/health'),
         apiRequest<NodeRecord[]>('/nodes'),
         apiRequest<TaskRecord[]>('/tasks'),
         apiRequest<AuditRecord[]>('/audit'),
+        statusFilter
+          ? apiRequest<TaskRecord[]>(`/tasks?status=${statusFilter}`)
+          : Promise.resolve(null),
       ]);
 
       setHealth(healthData);
       setNodes(nodesData);
       setTasks(tasksData);
       setAudit(auditData);
+      setFilteredTasks(filteredData);
       setError(null);
       setLastUpdated(new Date().toLocaleTimeString('es-VE', { hour12: false }));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo consultar la API.');
     }
-  }, []);
+  }, [statusFilter]);
 
   useEffect(() => {
     void loadDashboard();
@@ -131,6 +141,7 @@ export function App(): React.ReactElement {
   const pendingCount = tasks.filter(
     (t) => t.status === 'PENDING' || t.status === 'PROCESSING'
   ).length;
+  const visibleTasks = filteredTasks ?? tasks;
 
   return (
     <div className="page-shell">
@@ -290,6 +301,24 @@ export function App(): React.ReactElement {
       <section className="card">
         <div className="section-header">
           <h2 className="section-title">Cola de tareas en segundo plano</h2>
+          <label className="checkbox-label">
+            Estado:
+            <select
+              className="input"
+              value={statusFilter}
+              onChange={(e) => {
+                setFilteredTasks(null);
+                setStatusFilter(e.target.value as TaskStatus | '');
+              }}
+            >
+              <option value="">Todas</option>
+              {TASK_STATUSES.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
         <form className="form-row" onSubmit={(e) => void handleCreateTask(e)}>
           <input
@@ -328,14 +357,16 @@ export function App(): React.ReactElement {
               </tr>
             </thead>
             <tbody>
-              {tasks.length === 0 ? (
+              {visibleTasks.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="muted">
-                    No hay tareas registradas todavía. Encola una arriba.
+                    {statusFilter
+                      ? `No hay tareas con estado ${statusFilter}.`
+                      : 'No hay tareas registradas todavía. Encola una arriba.'}
                   </td>
                 </tr>
               ) : (
-                tasks.map((task) => (
+                visibleTasks.map((task) => (
                   <tr key={task.id}>
                     <td className="mono">#{task.id}</td>
                     <td className="wrap">{task.title}</td>
