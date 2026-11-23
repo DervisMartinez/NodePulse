@@ -8,6 +8,7 @@ import {
   type SystemHealthData,
   type TaskRecord,
 } from './utils/api-client';
+import { MetricsChart } from './components/MetricsChart';
 import { formatRelative } from './utils/format';
 
 type TaskStatus = TaskRecord['status'];
@@ -289,6 +290,7 @@ export function App(): React.ReactElement {
               Cerrar detalle
             </button>
           </div>
+          <MetricsChart metrics={selectedNode.recentMetrics} />
           <div className="table-wrap">
             <table>
               <thead>
