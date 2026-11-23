@@ -29,6 +29,10 @@ async function req(path, { method = 'GET', body } = {}) {
   return { status: res.status, ok: res.ok, json };
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function main() {
   console.log(`\nSmoke test contra ${API_URL}\n`);
 
@@ -47,6 +51,31 @@ async function main() {
     body: { title: taskTitle },
   });
   check('POST /api/tasks crea tarea', created.status === 201 && created.json?.data?.title === taskTitle);
+
+const taskId = created.json?.data?.id;
+  let completedTask = null;
+  const maxAttempts = 30; // 30 * 500ms = 15 segundos maximos
+
+  for (let i = 0; i < maxAttempts; i++) {
+    await sleep(500);
+    const listRes = await req('/tasks');
+    if (listRes.ok && Array.isArray(listRes.json?.data)) {
+      const found = listRes.json.data.find((t) => t.id === taskId);
+      if (found && found.status === 'COMPLETED') {
+        completedTask = found;
+        break;
+      }
+      if (found && found.status === 'FAILED') {
+        break;
+      }
+    }
+  }
+
+  check(
+    'Worker completa la tarea creada (COMPLETED)',
+    Boolean(completedTask && completedTask.status === 'COMPLETED'),
+    completedTask ? '' : 'Timeout o tarea fallida'
+  );
 
   const nodes = await req('/nodes');
   check('GET /api/nodes responde lista', nodes.ok && Array.isArray(nodes.json?.data));
