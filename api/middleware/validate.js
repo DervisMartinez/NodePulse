@@ -5,8 +5,16 @@ function isValidPercent(value) {
 }
 
 function validateMetricsPayload(req, _res, next) {
-  const { name, hostname, cpuPercent, memoryPercent, loadAvg, uptimeSeconds, status } =
-    req.body || {};
+  const {
+    name,
+    hostname,
+    cpuPercent,
+    memoryPercent,
+    loadAvg,
+    uptimeSeconds,
+    status,
+    memoryLimitMb,
+  } = req.body || {};
 
   if (typeof name !== 'string' || name.trim().length < 2 || name.trim().length > 100) {
     return next(
@@ -65,6 +73,20 @@ function validateMetricsPayload(req, _res, next) {
     return next(
       new AppError(
         'El campo "status" debe ser "healthy", "degraded" u "offline".',
+        400,
+        'VALIDATION_ERROR'
+      )
+    );
+  }
+
+  if (
+    memoryLimitMb !== undefined &&
+    memoryLimitMb !== null &&
+    (!Number.isInteger(memoryLimitMb) || memoryLimitMb <= 0)
+  ) {
+    return next(
+      new AppError(
+        'El campo "memoryLimitMb" debe ser un entero positivo o null.',
         400,
         'VALIDATION_ERROR'
       )
