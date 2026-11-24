@@ -33,4 +33,4 @@ Registrar cada incidente detectado con evidencia real de la terminal.
 - Solución: rama fix/luis-sabotaje-develop, PR #22, que deja esas cuatro líneas como estaban.
 - Verificación: se levantó todo con Docker, los 6 servicios quedaron sanos y scripts/healthcheck.sh pasó.
 - Participantes: Luis Guerrero. Revisión: Angel Navas y Luisa Legoni.
-- Declaración de uso de IA: (completar)
+- Declaración de uso de IA: Se usó IA (Claude) como apoyo en el diagnóstico, la corrección y la redacción. Todo se revisó y se probó antes de subirlo.
