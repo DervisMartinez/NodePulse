@@ -34,3 +34,30 @@ Registrar cada incidente detectado con evidencia real de la terminal.
 - Verificación: se levantó todo con Docker, los 6 servicios quedaron sanos y scripts/healthcheck.sh pasó.
 - Participantes: Luis Guerrero. Revisión: Angel Navas y Luisa Legoni.
 - Declaración de uso de IA: Se usó IA (Claude) como apoyo en el diagnóstico, la corrección y la redacción. Todo se revisó y se probó antes de subirlo.
+
+## Incidente 2 — Commit en feature/luisana-api reemplaza la API por un esqueleto que no compila
+- Detectado por / hora: Luisa Legoni, 2026-11-22 14:59.
+- Síntoma observado: en mi rama feature/luisana-api apareció un commit que no era mío. La API quedaba sin poder construirse ni arrancar: errores de sintaxis en las rutas y en server.js, el Dockerfile copiaba carpetas que no existen y se borraron casi todas las pruebas y el package-lock.json.
+- Comandos de diagnóstico:
+  ```
+  $ git show --stat 4972da6
+  4972da6  Dervis Martinez   Sat Nov 21 23:12:13 2026 -0400
+  chore(api): reorganiza estructura modular de rutas y configuracion inicial
+   api/Dockerfile | 20 +-   api/server.js | 12 +-   api/package-lock.json | 1027 ---
+   ... 13 files changed, 68 insertions(+), 1864 deletions(-)
+
+  $ git branch -r --contains 4972da6
+    origin/feature/luisana-api
+
+  $ node --check <archivo>
+  SyntaxError en api/routes/health.routes.js:15, nodes.routes.js:24, tasks.routes.js:21, server.js:10
+  ```
+- Causa raíz: commit 4972da6.
+  - api/Dockerfile línea 5: copia src/, que no existe, y deja de copiar db.js, app.js, server.js, routes y middleware.
+  - api/server.js: usa el puerto 4000 y app.start(), que no existe.
+  - api/routes/*.js: código incompleto (TODO) con errores de sintaxis; /health pasa a /status, así que el healthcheck fallaría.
+- Por qué ocurrió: el commit se subió directamente a mi rama, que no tiene protección, sin Pull Request ni revisión. Su mensaje (chore: reorganiza estructura) lo hacía parecer un cambio legítimo.
+- Solución: revert en mi rama feature/luisana-api, commit 0e1ed29 («Revierte el commit 4972da6 que rompia la API»), que llegó a develop con el PR #6.
+- Verificación: git diff 9b10eee HEAD -- api docker-compose.yml .env.example quedó vacío (la API volvió a ser idéntica a la original); npm test de la API pasó 8 de 8.
+- Participantes: Luisa Legoni.
+- Declaración de uso de IA: Se usó IA (Claude) como apoyo en el diagnóstico y la redacción. El revert lo hice yo y lo probé antes de subirlo.
