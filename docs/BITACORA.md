@@ -61,3 +61,33 @@ Registrar cada incidente detectado con evidencia real de la terminal.
 - Verificación: git diff 9b10eee HEAD -- api docker-compose.yml .env.example quedó vacío (la API volvió a ser idéntica a la original); npm test de la API pasó 8 de 8.
 - Participantes: Luisa Legoni.
 - Declaración de uso de IA: Se usó IA (Claude) como apoyo en el diagnóstico y la redacción. El revert lo hice yo y lo probé antes de subirlo.
+
+## Incidente 3 — Fuga de secretos: api/.env.backup subido a feature/luisana-api
+- Detectado por / hora: Luisa Legoni, 2026-11-24 16:35.
+- Síntoma observado: en mi rama feature/luisana-api (y por lo tanto en el PR #17) apareció un commit que no era mío, de un autor «Mantenimiento Lab», que subía api/.env.backup con la URL de la base de datos con su clave y un API_TOKEN.
+- Comandos de diagnóstico:
+  ```
+  $ git log --format="%h %an <%ae> %ad | %s" origin/feature/luisana-api
+  5eb07b5 Mantenimiento Lab <mantenimiento.lab@nodepulse.invalid> Tue Nov 24 14:25:36 2026 -0500 | Agrega respaldo de la configuración local de la API
+
+  $ git show 5eb07b5 -- api/.env.backup
+  +# Respaldo de la configuración local de la API
+  +DATABASE_URL=postgresql://monitor_user:<clave>@db:5432/monitor_db
+  +API_TOKEN=<token>                    (valores ocultos aquí para no volver a publicarlos)
+
+  $ git branch -r --contains 5eb07b5
+    origin/feature/luisana-api
+
+  $ git check-ignore -v api/.env.backup
+  (sin salida: .gitignore no lo excluía)
+  ```
+- Causa raíz: commit 5eb07b5 (api/.env.backup, 3 líneas). El .gitignore solo excluía .env, .env.local y .env.*.local, así que .env.backup se podía subir.
+- Por qué ocurrió: el commit llegó directamente a mi rama, que no tiene protección, con un autor falso (dominio .invalid y otra zona horaria) y un mensaje de mantenimiento que lo hacía parecer legítimo. Un archivo de configuración con secretos nunca debe estar en el repositorio.
+- Solución:
+  - Angel Navas lo revirtió en feature/luisana-api: 071a53a (borra el archivo), c43c821 y 451f912 (revert de 5eb07b5).
+  - Commit 4174c96 en feature/luisana-api: el .gitignore excluye .env.* (salvo .env.example) y *.backup.
+  - No se reescribió la historia (sin push --force): el secreto sigue visible en el historial, así que el API_TOKEN se considera comprometido y debe rotarse.
+  - Todo llegó a develop con el PR #17. Explicación del incidente en un comentario del PR #17.
+- Verificación: api/.env.backup ya no existe en la rama; git check-ignore -v api/.env.backup → .gitignore:12:*.backup (ahora se ignora); .env.example sigue versionado; npm test de la API pasó 15 de 15.
+- Participantes: Luisa Legoni. Revert: Angel Navas.
+- Declaración de uso de IA: Se usó IA (Claude) como apoyo en el diagnóstico, la corrección del .gitignore y la redacción. Todo se revisó y se probó antes de subirlo.
