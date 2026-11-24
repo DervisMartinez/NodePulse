@@ -14,6 +14,7 @@ function serializeNode(row) {
     online,
     cpuPercent: Number(row.last_cpu_percent),
     memoryPercent: Number(row.last_memory_percent),
+    memoryLimitMb: row.memory_limit_mb == null ? null : Number(row.memory_limit_mb),
     loadAvg: Number(row.last_load_avg),
     uptimeSeconds: Number(row.uptime_seconds),
     lastSeenAt: row.last_seen_at,
@@ -54,7 +55,7 @@ function createNodesRouter(db) {
 
       const node = nodeResult.rows[0];
       const metricsResult = await db.query(
-        `SELECT id, cpu_percent, memory_percent, load_avg, uptime_seconds, status, recorded_at
+        `SELECT id, cpu_percent, memory_percent, memory_limit_mb, load_avg, uptime_seconds, status, recorded_at
          FROM node_metrics
          WHERE node_id = $1
          ORDER BY recorded_at DESC
@@ -70,6 +71,7 @@ function createNodesRouter(db) {
             id: m.id,
             cpuPercent: Number(m.cpu_percent),
             memoryPercent: Number(m.memory_percent),
+            memoryLimitMb: m.memory_limit_mb == null ? null : Number(m.memory_limit_mb),
             loadAvg: Number(m.load_avg),
             uptimeSeconds: Number(m.uptime_seconds),
             status: m.status,
@@ -92,14 +94,15 @@ function createNodesRouter(db) {
         loadAvg = 0,
         uptimeSeconds = 0,
         status = 'healthy',
+        memoryLimitMb = null,
       } = req.body;
 
       const upsertNode = await db.query(
         `INSERT INTO nodes (
            name, hostname, status, last_cpu_percent, last_memory_percent,
-           last_load_avg, uptime_seconds, last_seen_at
+           last_load_avg, uptime_seconds, memory_limit_mb, last_seen_at
          )
-         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
          ON CONFLICT (name) DO UPDATE SET
            hostname = EXCLUDED.hostname,
            status = EXCLUDED.status,
@@ -107,17 +110,18 @@ function createNodesRouter(db) {
            last_memory_percent = EXCLUDED.last_memory_percent,
            last_load_avg = EXCLUDED.last_load_avg,
            uptime_seconds = EXCLUDED.uptime_seconds,
+           memory_limit_mb = COALESCE(EXCLUDED.memory_limit_mb, nodes.memory_limit_mb),
            last_seen_at = NOW()
          RETURNING *`,
-        [name, hostname, status, cpuPercent, memoryPercent, loadAvg, uptimeSeconds]
+        [name, hostname, status, cpuPercent, memoryPercent, loadAvg, uptimeSeconds, memoryLimitMb]
       );
 
       const node = upsertNode.rows[0];
 
       await db.query(
-        `INSERT INTO node_metrics (node_id, cpu_percent, memory_percent, load_avg, uptime_seconds, status)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [node.id, cpuPercent, memoryPercent, loadAvg, uptimeSeconds, status]
+        `INSERT INTO node_metrics (node_id, cpu_percent, memory_percent, load_avg, uptime_seconds, status, memory_limit_mb)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [node.id, cpuPercent, memoryPercent, loadAvg, uptimeSeconds, status, memoryLimitMb]
       );
 
       if (status === 'degraded' || cpuPercent >= 90 || memoryPercent >= 90) {
