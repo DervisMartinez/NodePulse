@@ -34,6 +34,7 @@ services:
       DATABASE_URL: "postgresql://${POSTGRES_USER:-monitor_user}:${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD: copia .env.example a .env}@db:5432/${POSTGRES_DB:-monitor_db}"
       WORKER_MAX_RETRIES: ${WORKER_MAX_RETRIES:-3}
       TASK_STALE_MS: ${TASK_STALE_MS:-60000}
+      METRICS_SCALE: ratio
     networks:
       - frontal
     healthcheck:
@@ -79,6 +80,7 @@ services:
       API_URL: http://api:3000
       NODE_NAME: ${COLLECTOR_NODE_NAME:-nodo-facyt-01}
       COLLECTOR_INTERVAL_MS: ${COLLECTOR_INTERVAL_MS:-5000}
+      METRICS_SCALE: ratio
     networks:
       - datos
     healthcheck:
