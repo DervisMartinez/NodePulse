@@ -15,7 +15,7 @@
 - *db (Alumno 1 - Angel Navas):* Modifica la base de datos en `db/init.sql` para agregar la columna `memory_limit_mb` en las tabla `node` y `node_metrics` (#16).
 
 ### Corregido
-- 
+- *scripts (Alumno 7 - Jean Santamaria):* Restaura finales de línea `LF` para `*.sh` en `.gitattributes` y corrige variables de entorno (`POSTGRES_PASSWORD`) y red `frontal` de `api` en `docker-compose.yml` (#13).
 
 ## [1.0-base] - Base inicial
 
