@@ -57,7 +57,7 @@ function decideOutcome(task, envMaxRetries, { workerName, durationMs } = {}) {
  * @returns {number} - Milisegundos a esperar antes del siguiente intento
  */
 function calculateBackoff(trial, backoffMs, topMs){
-  const waiting = backoffMs * Math.pow(2, trial - 1);
+  const waiting = backoffMs * Math.pow(2, trial);
   return Math.min(waiting, topMs);
 }
 
