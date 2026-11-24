@@ -4,7 +4,7 @@ export function formatRelative(iso: string, now: number = Date.now()): string {
     return '—';
   }
 
-  const seconds = Math.max(0, Math.floor((now - time) / 1000));
+  const seconds = Math.max(0, Math.floor((now - time) / 100));
   if (seconds < 60) {
     return `hace ${seconds} s`;
   }
