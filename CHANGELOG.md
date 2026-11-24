@@ -10,7 +10,6 @@
 ### Cambiado
 
 - *worker (Alumno 2 - Jesus Hernandez):* Implementa backoff exponencial en `lib/retry.js` (`calculateBackoff`): espera `WORKER_BACKOFF_MS × 2^(intento-1)` con tope de 30 s antes de reencolar una tarea fallida. Agrega log `"reencolando en X ms"` en `index.js`. Implementa apagado ordenado ante `SIGTERM`: el worker termina la tarea en curso antes de salir. El contenedor ahora corre como usuario sin privilegios (`USER node` en Dockerfile). Agrega variable `WORKER_BACKOFF_MS` al entorno. Incluye pruebas unitarias de `lib/retry.js` con `node --test` (#14).
-- *scripts (Alumno 7 - Jean Santamaria):* Amplía `scripts/smoke-test.mjs` con espera (polling) para verificar que el `worker` complete las tareas creadas (#1).
 
 ### Corregido
 - 
