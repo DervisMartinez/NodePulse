@@ -284,3 +284,63 @@ test('Ruta inexistente devuelve 404 uniforme', async () => {
   assert.equal(res.body.success, false);
   assert.equal(res.body.error.code, 'NOT_FOUND');
 });
+
+test('POST /api/tasks/requeue-stale reencola tareas atascadas y registra auditoría', async () => {
+  const auditQueries = [];
+  const mockDb = {
+    async query(sql) {
+      if (sql.includes('UPDATE tasks')) {
+        return { rows: [{ id: 4 }, { id: 9 }] };
+      }
+      if (sql.includes('INSERT INTO incident_audit')) {
+        auditQueries.push(sql);
+      }
+      return { rows: [] };
+    },
+  };
+
+  const res = await invokeApp(mockDb, { method: 'POST', url: '/api/tasks/requeue-stale' });
+  assert.equal(res.status, 200);
+  assert.equal(res.body.success, true);
+  assert.equal(res.body.data.requeued, 2);
+  assert.deepEqual(res.body.data.taskIds, [4, 9]);
+  assert.equal(auditQueries.length, 1);
+});
+
+test('POST /api/tasks/requeue-stale no registra auditoría si no hay tareas atascadas', async () => {
+  const auditQueries = [];
+  const mockDb = {
+    async query(sql) {
+      if (sql.includes('INSERT INTO incident_audit')) {
+        auditQueries.push(sql);
+      }
+      return { rows: [] };
+    },
+  };
+
+  const res = await invokeApp(mockDb, { method: 'POST', url: '/api/tasks/requeue-stale' });
+  assert.equal(res.status, 200);
+  assert.equal(res.body.data.requeued, 0);
+  assert.equal(auditQueries.length, 0);
+});
+
+test('GET /api/tasks?status=PENDING filtra por estado', async () => {
+  let usedParams = null;
+  const mockDb = {
+    async query(_sql, params) {
+      usedParams = params;
+      return { rows: [] };
+    },
+  };
+
+  const res = await invokeApp(mockDb, { url: '/api/tasks?status=PENDING' });
+  assert.equal(res.status, 200);
+  assert.deepEqual(usedParams, ['PENDING']);
+});
+
+test('GET /api/tasks rechaza un estado inválido con 400', async () => {
+  const mockDb = { async query() { return { rows: [] }; } };
+  const res = await invokeApp(mockDb, { url: '/api/tasks?status=BORRADO' });
+  assert.equal(res.status, 400);
+  assert.equal(res.body.error.code, 'VALIDATION_ERROR');
+});
