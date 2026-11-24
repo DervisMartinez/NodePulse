@@ -1,5 +1,0 @@
-ALTER TABLE nodes
-ADD COLUMN IF NOT EXISTS memory_limit_mb INTEGER NULL;
-
-ALTER TABLE node_metrics
-ADD COLUMN IF NOT EXISTS memory_limit_mb INTEGER NULL;

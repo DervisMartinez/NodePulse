@@ -13,8 +13,7 @@ CREATE TABLE IF NOT EXISTS nodes (
     last_load_avg NUMERIC(6, 2) NOT NULL DEFAULT 0,
     uptime_seconds BIGINT NOT NULL DEFAULT 0,
     last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    memory_limit_mb INTEGER NULL
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS node_metrics (
@@ -25,8 +24,7 @@ CREATE TABLE IF NOT EXISTS node_metrics (
     load_avg NUMERIC(6, 2) NOT NULL DEFAULT 0,
     uptime_seconds BIGINT NOT NULL DEFAULT 0,
     status VARCHAR(20) NOT NULL DEFAULT 'healthy',
-    recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    memory_limit_mb INTEGER NULL
+    recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_node_metrics_node_recorded

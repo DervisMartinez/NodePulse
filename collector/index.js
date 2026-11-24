@@ -46,12 +46,12 @@ function collectSystemMetrics() {
   const loadAvg = Number((os.loadavg()[0] || 0).toFixed(2));
   const uptimeSeconds = Math.floor(os.uptime());
   const status = cpuPercent >= 90 || memoryPercent >= 90 ? 'degraded' : 'healthy';
-  const memoryScale = process.env.METRICS_SCALE === 'ratio' ? 0.01 : 1;
+
   return {
     name: NODE_NAME,
     hostname: os.hostname(),
     cpuPercent,
-    memoryPercent: Number((memoryPercent * memoryScale).toFixed(4)),
+    memoryPercent,
     loadAvg,
     uptimeSeconds,
     status,
