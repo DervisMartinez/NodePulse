@@ -15,7 +15,11 @@
 - *db (Alumno 1 - Angel Navas):* Modifica la base de datos en `db/init.sql` para agregar la columna `memory_limit_mb` en las tabla `node` y `node_metrics` (#16).
 
 ### Corregido
+
 - *scripts (Alumno 7 - Jean Santamaria):* Restaura finales de línea `LF` para `*.sh` en `.gitattributes` y corrige variables de entorno (`POSTGRES_PASSWORD`) y red `frontal` de `api` en `docker-compose.yml` (#13).
+
+- *compose (Alumno 4 - Luis Guerrero):* Corrige los cambios de los PR #18 y #19: restaura `POSTGRES_PASSWORD` en el servicio db, vuelve a conectar la api a la red `datos`, deja los `.sh` con finales de línea LF y vuelve a incluir `lib` en la imagen del worker (#21).
+
 
 ## [1.0-base] - Base inicial
 
