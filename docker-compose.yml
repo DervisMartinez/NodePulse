@@ -36,6 +36,7 @@ services:
       TASK_STALE_MS: ${TASK_STALE_MS:-60000}
     networks:
       - frontal
+      - datos
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
       interval: 5s
