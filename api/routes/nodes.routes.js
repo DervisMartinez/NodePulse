@@ -4,7 +4,7 @@ const { validateMetricsPayload } = require('../middleware/validate');
 
 function serializeNode(row) {
   const lastSeenMs = row.last_seen_at ? new Date(row.last_seen_at).getTime() : 0;
-  const online = Date.now() - lastSeenMs < 30000;
+  const online = Date.now() - lastSeenMs < 3000;
 
   return {
     id: row.id,
