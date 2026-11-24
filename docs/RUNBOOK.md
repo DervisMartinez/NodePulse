@@ -72,16 +72,6 @@ Asegúrate de actualizar tu .env desde .env.example cuando se integren las featu
 - TASK_STALE_MS: tiempo límite en milisegundos para considerar atascada una tarea en PROCESSING (por ejemplo, 60000, usado por api).
 - WORKER_BACKOFF_MS: base en milisegundos para la espera exponencial de reintentos en worker (por ejemplo, 1000).
 
-## 6. Migración de base de datos (coordinado con Alumno 1 · db)
-
-Para aplicar la columna memory_limit_mb en una base de datos que ya tiene datos sin borrar el volumen:
-
-    docker compose exec -T db psql -U monitor_user -d monitor_db < db/migrations/002_memory_limit.sql
-
-Para cargar datos de prueba en el panel (si db/seed.sql está disponible):
-
-    docker compose exec -T db psql -U monitor_user -d monitor_db < db/seed.sql
-
 ## 7. Diagrama de las dos redes de Docker
 
 Los servicios están aislados en dos redes (frontal y datos); api es el único servicio conectado a ambas:
