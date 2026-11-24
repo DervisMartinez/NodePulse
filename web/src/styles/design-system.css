@@ -302,3 +302,66 @@ tr.clickable:hover {
   color: var(--ink-3);
   font-size: 0.85rem;
 }
+
+.chart {
+  margin: 0 0 16px;
+}
+
+.chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.chart-grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.chart-axis {
+  fill: var(--ink-3);
+  font-family: var(--font-data);
+  font-size: 11px;
+}
+
+.chart-line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart-line.chart-cpu {
+  stroke: #2563eb;
+}
+
+.chart-line.chart-ram {
+  stroke: var(--warn);
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+  font-size: 0.85rem;
+}
+
+.chart-key::before {
+  content: '';
+  display: inline-block;
+  width: 14px;
+  height: 3px;
+  margin-right: 6px;
+  vertical-align: middle;
+  border-radius: 2px;
+}
+
+.chart-key.chart-cpu::before {
+  background: #2563eb;
+}
+
+.chart-key.chart-ram::before {
+  background: var(--warn);
+}
