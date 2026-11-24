@@ -29,7 +29,7 @@ curl -fsS "${BASE_URL}/" >/dev/null && echo "OK   GET / (Panel Web)"
 curl -fsS "${BASE_URL}/api/health" >/dev/null && echo "OK   GET /api/health"
 curl -fsS "${BASE_URL}/api/nodes" >/dev/null && echo "OK   GET /api/nodes"
 curl -fsS "${BASE_URL}/api/tasks" >/dev/null && echo "OK   GET /api/tasks"
-curl -fsS "${BASE_URL}/api/audit" >/dev/null && echo "OK   GET /api/audit"
+curl -fsS "${BASE_URL}/api/auditoria" >/dev/null && echo "OK   GET /api/audit"
 
 echo ""
 echo "=== Ejecutando pruebas unitarias dentro de api ==="

@@ -47,4 +47,18 @@ function decideOutcome(task, envMaxRetries, { workerName, durationMs } = {}) {
   };
 }
 
-module.exports = { resolveMaxRetries, decideOutcome };
+/**
+ * Calcula el tiempo de espera con backoff exponencial antes de reencolar.
+ * Formula: backoffMs * 2^(trial - 1), con tope máximo
+ * 
+ * @param {number} trial
+ * @param {number} backoffMs  -
+ * @param {number} topMs      - 
+ * @returns {number} - Milisegundos a esperar antes del siguiente intento
+ */
+function calculateBackoff(trial, backoffMs, topMs){
+  const waiting = backoffMs * Math.pow(2, trial);
+  return Math.min(waiting, topMs);
+}
+
+module.exports = { resolveMaxRetries, decideOutcome, calculateBackoff};
