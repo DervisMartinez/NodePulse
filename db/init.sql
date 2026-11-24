@@ -32,6 +32,9 @@ CREATE TABLE IF NOT EXISTS node_metrics (
 CREATE INDEX IF NOT EXISTS idx_node_metrics_node_recorded
     ON node_metrics (node_id, recorded_at DESC);
 
+CREATE INDEX IF NOT EXISTS idx_node_metrics_recorded
+    ON node_metrics (recorded_at DESC);
+
 CREATE TABLE IF NOT EXISTS tasks (
     id SERIAL PRIMARY KEY,
     title VARCHAR(160) NOT NULL,
@@ -63,3 +66,6 @@ CREATE TABLE IF NOT EXISTS incident_audit (
 INSERT INTO incident_audit (service_name, severity, event_type, message)
 VALUES ('db', 'INFO', 'SYSTEM_INIT', 'Esquema inicial de monitoreo e incidentes creado correctamente.')
 ON CONFLICT DO NOTHING;
+
+CREATE INDEX IF NOT EXISTS idx_incident_audit_service_created
+    ON incident_audit (service_name, created_at DESC);
