@@ -6,9 +6,11 @@
 - *docs (Alumno 8 - Bryan Mirabal):* Crea CHANGELOG.md, CONTRIBUTING.md, plantilla de Pull Request (.github/pull_request_template.md), plantillas de issue (.github/ISSUE_TEMPLATE/) y actualiza docs/RUNBOOK.md (#8).
 - *scripts (Alumno 7 - Jean Santamaria):* Crea `scripts/reset.sh`, `scripts/evidencia.sh` y `scripts/clean-clone-test.sh` con limpieza automática mediante `trap` (#1).
 - *gateway (Alumno 6 - Teoban Rondon):* Endurece el proxy con cabeceras de seguridad HTTP, rate limiting en /api/ (10 req/s, burst 20, codigo 429), logs JSON, paginas de error personalizadas 502/503, cache de estaticos y optimizacion Gzip (-47.76% payload) (#3).
+- *db (Alumno 1 - Angel Navas):*: Crea `db/migrations/002-memory-limit.sql` (#2).
 
 ### Cambiado
 - *scripts (Alumno 7 - Jean Santamaria):* Amplía `scripts/smoke-test.mjs` con espera (polling) para verificar que el `worker` complete las tareas creadas (#1).
+- *db (Alumno 1 - Angel Navas):* Modifica la base de datos en `db/init.sql` para agregar la columna `memory_limit_mb` en las tabla `node` y `node_metrics` (#2).
 
 ### Corregido
 - 
