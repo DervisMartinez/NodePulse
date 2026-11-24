@@ -58,7 +58,7 @@ function decideOutcome(task, envMaxRetries, { workerName, durationMs } = {}) {
  */
 function calculateBackoff(trial, backoffMs, topMs){
   const waiting = backoffMs * Math.pow(2, trial - 1);
-  return Math.min(espera, topMs);
+  return Math.min(waiting, topMs);
 }
 
 module.exports = { resolveMaxRetries, decideOutcome, calculateBackoff};

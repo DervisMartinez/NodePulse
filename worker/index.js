@@ -129,7 +129,7 @@ async function loop() {
     await sleep(500);
   }
 
-  console.log[`[worker] Apagado ordenado completado...`];
+  console.log('[worker] Apagado ordenado completado.');
   process.exit(0);
 }
 

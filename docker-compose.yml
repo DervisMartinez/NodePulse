@@ -58,6 +58,7 @@ services:
       WORKER_POLL_MS: ${WORKER_POLL_MS:-3000}
       WORKER_MAX_RETRIES: ${WORKER_MAX_RETRIES:-3}
       TASK_DURATION_MS: ${TASK_DURATION_MS:-1500}
+      WORKER_BACKOFF_MS: ${WORKER_BACKOFF_MS:-1000}
     networks:
       - datos
     healthcheck:

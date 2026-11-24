@@ -23,33 +23,33 @@ describe('calculateBackoff', () =>{
     });
 
     it('segundo intento dobla el tiempo de espera', () => {
-    assert.strictEqual(calcularBackoff(2, 1000, 30000), 2000);
+    assert.strictEqual(calculateBackoff(2, 1000, 30000), 2000);
     });
     
     it('tercer intento cuadruplica el tiempo base', () => {
-    assert.strictEqual(calcularBackoff(3, 1000, 30000), 4000);
+    assert.strictEqual(calculateBackoff(3, 1000, 30000), 4000);
     });
     
     it('nunca supera el tope máximo', () => {
     // 2^10 * 1000 = 1.024.000 ms >> 30000 ms
-    assert.strictEqual(calcularBackoff(10, 1000, 30000), 30000);
+    assert.strictEqual(calculateBackoff(10, 1000, 30000), 30000);
     });
     
     it('tope de 0 ms siempre devuelve 0', () => {
-    assert.strictEqual(calcularBackoff(1, 1000, 0), 0);
+    assert.strictEqual(calculateBackoff(1, 1000, 0), 0);
     });
 })
 
 // --- Test de decideOutcome ---
 describe('decideOutcome', () => {
     it('tarea sin fallo se completa', () => {
-        const task = {id: 1, attempts: 1, payload: {shouldFaild: false} };
+        const task = {id: 1, attempts: 1, payload: {shouldFail: false} };
         const result = decideOutcome(task, 3, { workerName: 'test', durationMs: 100});
         assert.strictEqual(result.status, 'COMPLETED');
     });
 
     it('tarea con fallo y reintentos disponibles vuelve a PENDING', () => {
-        const task = {id: 2, attempts: 1, payload: {shouldFaild: true} };
+        const task = {id: 2, attempts: 1, payload: {shouldFail: true} };
         const result = decideOutcome(task, 3, {});
         assert.strictEqual(result.status, 'PENDING');
     })
