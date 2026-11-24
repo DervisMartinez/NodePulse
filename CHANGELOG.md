@@ -6,7 +6,7 @@
 - *docs (Alumno 8 - Bryan Mirabal):* Crea CHANGELOG.md, CONTRIBUTING.md, plantilla de Pull Request (.github/pull_request_template.md), plantillas de issue (.github/ISSUE_TEMPLATE/) y actualiza docs/RUNBOOK.md (#8).
 - *scripts (Alumno 7 - Jean Santamaria):* Crea `scripts/reset.sh`, `scripts/evidencia.sh` y `scripts/clean-clone-test.sh` con limpieza automática mediante `trap` (#1).
 - *gateway (Alumno 6 - Teoban Rondon):* Endurece el proxy con cabeceras de seguridad HTTP, rate limiting en /api/ (10 req/s, burst 20, codigo 429), logs JSON, paginas de error personalizadas 502/503, cache de estaticos y optimizacion Gzip (-47.76% payload) (#3).
-- *db (Alumno 1 - Angel Navas):*: Crea `db/migrations/002_memory-limit.sql` (#16).
+- *db (Alumno 1 - Angel Navas):*: Crea `db/migrations/002_memory-limit.sql` (#16). Crea `db/seed.sql` (#25).
 - *web (Alumno 4 - Luis Guerrero):* Muestra el límite de memoria por nodo, último reporte en tiempo relativo, filtro de tareas por estado, botón para reencolar tareas atascadas y vista de detalle con gráfico de métricas (#5).
 
 ### Cambiado
