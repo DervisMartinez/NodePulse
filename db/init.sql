@@ -63,9 +63,9 @@ CREATE TABLE IF NOT EXISTS incident_audit (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX IF NOT EXISTS idx_incident_audit_service_created
+    ON incident_audit (service_name, created_at DESC);
+
 INSERT INTO incident_audit (service_name, severity, event_type, message)
 VALUES ('db', 'INFO', 'SYSTEM_INIT', 'Esquema inicial de monitoreo e incidentes creado correctamente.')
 ON CONFLICT DO NOTHING;
-
-CREATE INDEX IF NOT EXISTS idx_incident_audit_service_created
-    ON incident_audit (service_name, created_at DESC);
