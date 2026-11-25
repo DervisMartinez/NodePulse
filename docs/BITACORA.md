@@ -91,3 +91,38 @@ Registrar cada incidente detectado con evidencia real de la terminal.
 - Verificación: api/.env.backup ya no existe en la rama; git check-ignore -v api/.env.backup → .gitignore:12:*.backup (ahora se ignora); .env.example sigue versionado; npm test de la API pasó 15 de 15.
 - Participantes: Luisa Legoni. Revert: Angel Navas.
 - Declaración de uso de IA: Se usó IA (Claude) como apoyo en el diagnóstico, la corrección del .gitignore y la redacción. Todo se revisó y se probó antes de subirlo.
+
+## Incidente 4 — Merge no autorizado de develop a main ("Mantenimiento General") tumba producción
+- Detectado por / hora: Angel Navas (Alumno 1 · Base de Datos), 2026-11-24 16:50.
+- Síntoma observado: Tras el commit `4b42e5f` («Mantenimiento General») inyectado directamente en `main`, el entorno de producción fallaba en el arranque de la base de datos y la comunicación de servicios.
+- Comandos de diagnóstico:
+  $ git log -n 5 --oneline main
+  4b42e5f Merge branch 'develop' into main (Mantenimiento General)
+  00edf2a Reorganiza el RUNBOOK
+  $ docker compose ps
+- Causa raíz: Commit `4b42e5f` fusionado sin revisión en `main` que introdujo modificaciones no autorizadas en la configuración del clúster y dependencias.
+- Por qué ocurrió: Fusión directa en la rama protegida `main` sin pasar por revisión de código en Pull Request ni validación de pruebas automatizadas.
+- Solución: Hotfix mediante rama `hotfix/angel-incidentes-main` (PR #31) que revirtió el merge defectuoso en `main`.
+- Verificación: `docker compose up --build -d` y ejecución de `scripts/healthcheck.sh` con salida exitosa de servicios y pruebas de integridad.
+- Participantes: Angel Navas. Revisión: Equipo NodePulse.
+- Declaración de uso de IA: Se usó IA como apoyo en el diagnóstico de los commits en producción y redacción del reporte.
+
+## Incidente 5 — Fallo de arranque en contenedor Gateway por finales de línea CRLF en entrypoint.sh
+- Detectado por / hora: Teoban Rondón (Alumno 6 · Gateway), 2026-11-24 16:10.
+- Síntoma observado: Al levantar el entorno con `docker compose up -d --build`, el contenedor `gateway` entraba en bucle de reinicio (Restarting 127). En los logs se observaba el error: `monitoreo_gateway | exec /entrypoint.sh: no such file or directory`.
+- Comandos de diagnóstico:
+  $ docker compose ps gateway
+  NAME                 IMAGE               COMMAND                  SERVICE   STATUS
+  monitoreo_gateway    nodepulse-gateway   "/entrypoint.sh ngin…"   gateway   Restarting (127)
+
+  $ docker compose logs gateway --tail 5
+  monitoreo_gateway | exec /entrypoint.sh: no such file or directory
+
+  $ file gateway/entrypoint.sh
+  gateway/entrypoint.sh: POSIX shell script, ASCII text executable, with CRLF line terminators
+- Causa raíz: Commits 047f9b9 y 0d61375 («Ajusta la construcción y los finales de línea para Windows») por SantiDev28. En .gitattributes se forzó `*.sh text eol=crlf` y se introdujeron retornos de carro de Windows (`\r\n`) en gateway/entrypoint.sh.
+- Por qué ocurrió: Al ejecutarse dentro del contenedor Linux (Alpine), el kernel busca el intérprete `/bin/sh\r` en vez de `/bin/sh`, el cual no existe en el sistema operativo. Además, la caché local de Docker retenía la imagen construida con el archivo saboteado.
+- Solución: Normalización de finales de línea a Unix (LF) con `sed -i 's/\r$//' gateway/entrypoint.sh`, corrección en .gitattributes a `*.sh text eol=lf` y reconstrucción limpia de la imagen con `docker compose build gateway`.
+- Verificación: scripts/healthcheck.sh pasó completo con «SISTEMA SANO: Los 6 servicios responden correctamente»; curl a http://localhost:8080/gateway-health devuelve 200 OK con cabeceras de seguridad; prueba de carga a /api/nodes arrojó 24 respuestas 200 y 6 respuestas 429 confirmando el rate limit.
+- Participantes: Teoban Rondón.
+- Declaración de uso de IA: Se usó IA como apoyo en el diagnóstico de la codificación de caracteres en Linux y la verificación de las cabeceras HTTP.
