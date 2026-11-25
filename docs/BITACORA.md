@@ -103,7 +103,7 @@ $ git diff 9b10eee 4b42e5f --stat
   1. El merge de develop a main se hizo de forma no autorizada.
   2. Ese merge llevó a main los cambios defectuosos que ya estaban en develop: los commits 757b179 y 0d61375 (docker-compose.yml, .gitattributes y worker/.dockerignore, ver Incidente 1) asi como el commit 4972da6 (api/Dockerfile, api/server.js, api/routes/*.js, ver Incidente 2).
 - Por qué ocurrió: El mensaje "Mantenimiento General" hizo que el cambio pareciera rutinario, y develop no estaba estable cuando se fusionó. Sin revisión, nadie detectó que se promovían a producción cambios defectuosos.
-- Solución: Se creo una rama `hotfix/angel-incidentes-main` donde se hizo el commit 82221cf. Se utilizo `git revert -m 1 4b42e5f` o si se restauró main a 9b10eee. No se reescribió la historia (sin push --force).
+- Solución: Se creo una rama `hotfix/angel-incidentes-main` donde se hizo el commit 82221cf. Se utilizo `git revert -m 1 4b42e5f`. No se reescribió la historia (sin push --force).
 - Verificación: `git diff 9b10eee HEAD` vacío en lo que no debía cambiar; se levantó todo con Docker, los 6 servicios quedaron sanos, scripts/healthcheck.sh pasó, npm test de la API pasó N de N.
 - Participantes: Angel Navas. Revisión: Angel Navas.
 - Declaración de uso de IA: Se usó IA (Claude) como apoyo en la redacción del reporte. El diagnóstico, la corrección y las pruebas los realizó el equipo y se revisaron antes de subirlos.
