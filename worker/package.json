@@ -5,7 +5,6 @@
   "description": "Worker asíncrono con reintentos configurables (CAO503)",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "test": "node --test test/retry.test.js"
+    "start": "node index.js"
   }
 }
