@@ -71,6 +71,7 @@ services:
       dockerfile: Dockerfile
     container_name: monitoreo_collector
     restart: unless-stopped
+    mem_limit: 128m
     depends_on:
       api:
         condition: service_healthy
@@ -78,6 +79,7 @@ services:
       API_URL: http://api:3000
       NODE_NAME: ${COLLECTOR_NODE_NAME:-nodo-facyt-01}
       COLLECTOR_INTERVAL_MS: ${COLLECTOR_INTERVAL_MS:-5000}
+      COLLECTOR_MEMORY_SOURCE: ${COLLECTOR_MEMORY_SOURCE:-cgroup}
     networks:
       - datos
     healthcheck:

@@ -284,3 +284,147 @@ test('Ruta inexistente devuelve 404 uniforme', async () => {
   assert.equal(res.body.success, false);
   assert.equal(res.body.error.code, 'NOT_FOUND');
 });
+
+test('POST /api/tasks/requeue-stale reencola tareas atascadas y registra auditoría', async () => {
+  const auditQueries = [];
+  const mockDb = {
+    async query(sql) {
+      if (sql.includes('UPDATE tasks')) {
+        return { rows: [{ id: 4 }, { id: 9 }] };
+      }
+      if (sql.includes('INSERT INTO incident_audit')) {
+        auditQueries.push(sql);
+      }
+      return { rows: [] };
+    },
+  };
+
+  const res = await invokeApp(mockDb, { method: 'POST', url: '/api/tasks/requeue-stale' });
+  assert.equal(res.status, 200);
+  assert.equal(res.body.success, true);
+  assert.equal(res.body.data.requeued, 2);
+  assert.deepEqual(res.body.data.taskIds, [4, 9]);
+  assert.equal(auditQueries.length, 1);
+});
+
+test('POST /api/tasks/requeue-stale no registra auditoría si no hay tareas atascadas', async () => {
+  const auditQueries = [];
+  const mockDb = {
+    async query(sql) {
+      if (sql.includes('INSERT INTO incident_audit')) {
+        auditQueries.push(sql);
+      }
+      return { rows: [] };
+    },
+  };
+
+  const res = await invokeApp(mockDb, { method: 'POST', url: '/api/tasks/requeue-stale' });
+  assert.equal(res.status, 200);
+  assert.equal(res.body.data.requeued, 0);
+  assert.equal(auditQueries.length, 0);
+});
+
+test('GET /api/tasks?status=PENDING filtra por estado', async () => {
+  let usedParams = null;
+  const mockDb = {
+    async query(_sql, params) {
+      usedParams = params;
+      return { rows: [] };
+    },
+  };
+
+  const res = await invokeApp(mockDb, { url: '/api/tasks?status=PENDING' });
+  assert.equal(res.status, 200);
+  assert.deepEqual(usedParams, ['PENDING']);
+});
+
+test('GET /api/tasks rechaza un estado inválido con 400', async () => {
+  const mockDb = { async query() { return { rows: [] }; } };
+  const res = await invokeApp(mockDb, { url: '/api/tasks?status=BORRADO' });
+  assert.equal(res.status, 400);
+  assert.equal(res.body.error.code, 'VALIDATION_ERROR');
+});
+
+test('POST /api/metrics rechaza memoryLimitMb inválido con 400', async () => {
+  const mockDb = { async query() { return { rows: [] }; } };
+  for (const malo of [-5, 0, 1.5, '512']) {
+    const res = await invokeApp(mockDb, {
+      method: 'POST',
+      url: '/api/metrics',
+      body: { name: 'nodo-01', cpuPercent: 10, memoryPercent: 20, memoryLimitMb: malo },
+    });
+    assert.equal(res.status, 400, `debió rechazar ${JSON.stringify(malo)}`);
+    assert.equal(res.body.error.code, 'VALIDATION_ERROR');
+  }
+});
+
+test('POST /api/metrics guarda memoryLimitMb y lo devuelve', async () => {
+  const now = new Date().toISOString();
+  const params = {};
+  const mockDb = {
+    async query(sql, values) {
+      if (sql.includes('INSERT INTO nodes')) {
+        params.nodes = values;
+        return {
+          rows: [
+            {
+              id: 1,
+              name: 'nodo-01',
+              hostname: 'nodo-01',
+              status: 'healthy',
+              last_cpu_percent: '10',
+              last_memory_percent: '20',
+              last_load_avg: '0',
+              uptime_seconds: '0',
+              memory_limit_mb: 512,
+              last_seen_at: now,
+              created_at: now,
+            },
+          ],
+        };
+      }
+      if (sql.includes('INSERT INTO node_metrics')) params.metrics = values;
+      return { rows: [] };
+    },
+  };
+
+  const res = await invokeApp(mockDb, {
+    method: 'POST',
+    url: '/api/metrics',
+    body: { name: 'nodo-01', cpuPercent: 10, memoryPercent: 20, memoryLimitMb: 512 },
+  });
+
+  assert.equal(res.status, 201);
+  assert.equal(res.body.data.memoryLimitMb, 512);
+  assert.equal(params.nodes[7], 512);
+  assert.equal(params.metrics[6], 512);
+});
+
+test('GET /api/nodes devuelve memoryLimitMb null si no hay límite', async () => {
+  const now = new Date().toISOString();
+  const mockDb = {
+    async query() {
+      return {
+        rows: [
+          {
+            id: 1,
+            name: 'nodo-01',
+            hostname: 'nodo-01',
+            status: 'healthy',
+            last_cpu_percent: '10',
+            last_memory_percent: '20',
+            last_load_avg: '0',
+            uptime_seconds: '0',
+            memory_limit_mb: null,
+            last_seen_at: now,
+            created_at: now,
+          },
+        ],
+      };
+    },
+  };
+
+  const res = await invokeApp(mockDb, { url: '/api/nodes' });
+  assert.equal(res.status, 200);
+  assert.equal(res.body.data[0].memoryLimitMb, null);
+});

@@ -7,6 +7,9 @@ build/
 .env
 .env.local
 .env.*.local
+.env.*
+!.env.example
+*.backup
 
 # Logs y temporales
 *.log
@@ -14,3 +17,13 @@ npm-debug.log*
 coverage/
 .DS_Store
 Thumbs.db
+
+# --- Respaldos y volcados de base de datos (contienen datos reales) ---
+backups/
+*.sql.gz
+*.dump
+*.bak
+# Un .sql suelto en la raíz o en otras carpetas también puede ser un volcado.
+# El esquema versionado (p. ej. db/init.sql) se permite explícitamente:
+*.sql
+!db/*/*.sql
