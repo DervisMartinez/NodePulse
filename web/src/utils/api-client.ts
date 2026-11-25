@@ -15,6 +15,7 @@ export interface NodeRecord {
   online: boolean;
   cpuPercent: number;
   memoryPercent: number;
+  memoryLimitMb?: number | null;
   loadAvg: number;
   uptimeSeconds: number;
   lastSeenAt: string;
@@ -57,6 +58,12 @@ export interface AuditRecord {
   eventType: string;
   message: string;
   createdAt: string;
+}
+
+export interface RequeueStaleData {
+  requeued: number;
+  taskIds: number[];
+  staleMs: number;
 }
 
 interface ApiEnvelope<T> {
