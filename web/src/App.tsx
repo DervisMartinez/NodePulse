@@ -4,16 +4,9 @@ import {
   type AuditRecord,
   type NodeDetailData,
   type NodeRecord,
-  type RequeueStaleData,
   type SystemHealthData,
   type TaskRecord,
 } from './utils/api-client';
-import { MetricsChart } from './components/MetricsChart';
-import { formatRelative } from './utils/format';
-
-type TaskStatus = TaskRecord['status'];
-
-const TASK_STATUSES: TaskStatus[] = ['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'];
 
 function statusBadgeClass(status: string): string {
   switch (status) {
@@ -56,34 +49,26 @@ export function App(): React.ReactElement {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string>('—');
-  const [statusFilter, setStatusFilter] = useState<TaskStatus | ''>('');
-  const [filteredTasks, setFilteredTasks] = useState<TaskRecord[] | null>(null);
-  const [requeuing, setRequeuing] = useState(false);
-  const [requeueMessage, setRequeueMessage] = useState<string | null>(null);
 
   const loadDashboard = useCallback(async () => {
     try {
-      const [healthData, nodesData, tasksData, auditData, filteredData] = await Promise.all([
+      const [healthData, nodesData, tasksData, auditData] = await Promise.all([
         apiRequest<SystemHealthData>('/health'),
         apiRequest<NodeRecord[]>('/nodes'),
         apiRequest<TaskRecord[]>('/tasks'),
         apiRequest<AuditRecord[]>('/audit'),
-        statusFilter
-          ? apiRequest<TaskRecord[]>(`/tasks?status=${statusFilter}`)
-          : Promise.resolve(null),
       ]);
 
       setHealth(healthData);
       setNodes(nodesData);
       setTasks(tasksData);
       setAudit(auditData);
-      setFilteredTasks(filteredData);
       setError(null);
       setLastUpdated(new Date().toLocaleTimeString('es-VE', { hour12: false }));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo consultar la API.');
     }
-  }, [statusFilter]);
+  }, []);
 
   useEffect(() => {
     void loadDashboard();
@@ -133,25 +118,6 @@ export function App(): React.ReactElement {
     }
   }
 
-  async function handleRequeueStale(): Promise<void> {
-    setRequeuing(true);
-    try {
-      const { requeued } = await apiRequest<RequeueStaleData>('/tasks/requeue-stale', {
-        method: 'POST',
-      });
-      setRequeueMessage(
-        requeued === 0
-          ? 'No había tareas atascadas.'
-          : `Se reencolaron ${requeued} tarea(s) atascada(s).`
-      );
-      await loadDashboard();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudieron reencolar las tareas.');
-    } finally {
-      setRequeuing(false);
-    }
-  }
-
   const onlineNodes = nodes.filter((n) => n.online);
   const avgCpu =
     onlineNodes.length > 0
@@ -164,7 +130,6 @@ export function App(): React.ReactElement {
   const pendingCount = tasks.filter(
     (t) => t.status === 'PENDING' || t.status === 'PROCESSING'
   ).length;
-  const visibleTasks = filteredTasks ?? tasks;
 
   return (
     <div className="page-shell">
@@ -237,7 +202,6 @@ export function App(): React.ReactElement {
                 <th>Estado</th>
                 <th>CPU %</th>
                 <th>RAM %</th>
-                <th>Límite</th>
                 <th>Load (1m)</th>
                 <th>Uptime (s)</th>
                 <th>Último reporte</th>
@@ -246,7 +210,7 @@ export function App(): React.ReactElement {
             <tbody>
               {nodes.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="muted">
+                  <td colSpan={8} className="muted">
                     Esperando telemetría del servicio collector...
                   </td>
                 </tr>
@@ -264,14 +228,9 @@ export function App(): React.ReactElement {
                     </td>
                     <td className="mono">{node.cpuPercent.toFixed(2)}%</td>
                     <td className="mono">{node.memoryPercent.toFixed(2)}%</td>
-                    <td className="mono">
-                      {node.memoryLimitMb != null ? `${node.memoryLimitMb} MB` : 'sin límite'}
-                    </td>
                     <td className="mono">{node.loadAvg.toFixed(2)}</td>
                     <td className="mono">{node.uptimeSeconds}s</td>
-                    <td className="mono" title={formatTime(node.lastSeenAt)}>
-                      {formatRelative(node.lastSeenAt)}
-                    </td>
+                    <td className="mono">{formatTime(node.lastSeenAt)}</td>
                   </tr>
                 ))
               )}
@@ -290,7 +249,6 @@ export function App(): React.ReactElement {
               Cerrar detalle
             </button>
           </div>
-          <MetricsChart metrics={selectedNode.recentMetrics} />
           <div className="table-wrap">
             <table>
               <thead>
@@ -325,35 +283,6 @@ export function App(): React.ReactElement {
       <section className="card">
         <div className="section-header">
           <h2 className="section-title">Cola de tareas en segundo plano</h2>
-          <div className="topbar-actions">
-            {requeueMessage && <span className="muted">{requeueMessage}</span>}
-            <button
-              type="button"
-              className="btn"
-              onClick={() => void handleRequeueStale()}
-              disabled={requeuing}
-            >
-              {requeuing ? 'Reencolando...' : 'Reencolar tareas atascadas'}
-            </button>
-            <label className="checkbox-label">
-              Estado:
-              <select
-                className="input"
-                value={statusFilter}
-                onChange={(e) => {
-                  setFilteredTasks(null);
-                  setStatusFilter(e.target.value as TaskStatus | '');
-                }}
-              >
-                <option value="">Todas</option>
-                {TASK_STATUSES.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
         </div>
         <form className="form-row" onSubmit={(e) => void handleCreateTask(e)}>
           <input
@@ -392,16 +321,14 @@ export function App(): React.ReactElement {
               </tr>
             </thead>
             <tbody>
-              {visibleTasks.length === 0 ? (
+              {tasks.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="muted">
-                    {statusFilter
-                      ? `No hay tareas con estado ${statusFilter}.`
-                      : 'No hay tareas registradas todavía. Encola una arriba.'}
+                    No hay tareas registradas todavía. Encola una arriba.
                   </td>
                 </tr>
               ) : (
-                visibleTasks.map((task) => (
+                tasks.map((task) => (
                   <tr key={task.id}>
                     <td className="mono">#{task.id}</td>
                     <td className="wrap">{task.title}</td>

@@ -21,32 +21,14 @@ function serializeTask(row) {
   };
 }
 
-const TASK_STATUSES = ['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'];
-
 function createTasksRouter(db) {
   const router = express.Router();
 
-  router.get('/tasks', async (req, res, next) => {
+  router.get('/tasks', async (_req, res, next) => {
     try {
-      const { status } = req.query;
-
-      if (status !== undefined && !TASK_STATUSES.includes(status)) {
-        return next(
-          new AppError(
-            `El filtro "status" debe ser uno de: ${TASK_STATUSES.join(', ')}.`,
-            400,
-            'VALIDATION_ERROR'
-          )
-        );
-      }
-
-      const { rows } = status
-        ? await db.query(
-            'SELECT * FROM tasks WHERE status = $1 ORDER BY id DESC LIMIT 50',
-            [status]
-          )
-        : await db.query('SELECT * FROM tasks ORDER BY id DESC LIMIT 50');
-
+      const { rows } = await db.query(
+        'SELECT * FROM tasks ORDER BY id DESC LIMIT 50'
+      );
       res.status(200).json({
         success: true,
         data: rows.map(serializeTask),
@@ -111,43 +93,6 @@ function createTasksRouter(db) {
       res.status(200).json({
         success: true,
         data: rows.length > 0 ? serializeTask(rows[0]) : null,
-      });
-    } catch (err) {
-      next(err);
-    }
-  });
-
-  router.post('/tasks/requeue-stale', async (_req, res, next) => {
-    try {
-      const staleMs = Number(process.env.TASK_STALE_MS) || 60000;
-
-      const { rows } = await db.query(
-        `UPDATE tasks
-         SET status = 'PENDING',
-             worker_name = NULL,
-             updated_at = NOW()
-         WHERE status = 'PROCESSING'
-           AND updated_at < NOW() - ($1::int * INTERVAL '1 millisecond')
-         RETURNING id`,
-        [staleMs]
-      );
-
-      const taskIds = rows.map((row) => row.id);
-
-      if (taskIds.length > 0) {
-        await db.query(
-          `INSERT INTO incident_audit (service_name, severity, event_type, message, metadata)
-           VALUES ('api', 'WARN', 'TASKS_REQUEUED', $1, $2)`,
-          [
-            `Se reencolaron ${taskIds.length} tarea(s) atascada(s) en PROCESSING por más de ${staleMs} ms.`,
-            JSON.stringify({ taskIds, staleMs }),
-          ]
-        );
-      }
-
-      res.status(200).json({
-        success: true,
-        data: { requeued: taskIds.length, taskIds, staleMs },
       });
     } catch (err) {
       next(err);
